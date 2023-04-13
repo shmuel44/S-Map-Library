@@ -1,7 +1,8 @@
 import numpy as np
-from typing import List, Dict, Tuple, Iterable, Any, Union, Optional
+from typing import List, Dict, Any, Union
 
-import lib_common as lco
+from ..misc import common as lco
+
 
 
 class PineconeIndexElement:

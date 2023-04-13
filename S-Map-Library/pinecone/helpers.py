@@ -1,11 +1,8 @@
 import pinecone as pc
-import pandas as pd
-import json as js
-import dataiku as di
-from typing import List, Dict, Tuple, Iterable, Any, Union, Optional
+from typing import List
 
-import lib_common as lco
-import cls_pinecone as cpi
+from . import classes as cpi
+
 
 
 def initialize_session(api_key: str, environment: str) -> None:
@@ -19,7 +16,8 @@ def initialize_session(api_key: str, environment: str) -> None:
     pc.init(
         api_key=api_key, 
         environment=environment)
-    
+
+
 def get_or_create_index(name: str, dimension: int, metric: str, pod_type: str) -> pc.Index:
     """
     Returns the Pinecone index with the given name, or creates it if it does not exist.
@@ -41,6 +39,7 @@ def get_or_create_index(name: str, dimension: int, metric: str, pod_type: str) -
             pod_type=pod_type)
         
     return pc.Index(index_name=name)
+
 
 def validate_keys(index: pc.Index, namespace: str, keys: List[str]) -> List[str]:
     """
