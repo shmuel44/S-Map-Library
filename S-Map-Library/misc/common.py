@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 import numpy as np
 
 
@@ -38,11 +38,11 @@ def format_value(value: Any) -> Any:
         return value
 
 
-def flatten_name_value_pairs(pairs, separator):
+def flatten_name_value_pairs(pairs: List[Tuple[str, Any, str]], separator: str) -> str:
     """Formats a list of name-value pairs into a flattened string with a separator between each pair.
 
     Args:
-        pairs (list): A list of tuples, where each tuple contains the name, value, and format specifier for a pair to be formatted.
+        pairs (List[Tuple[str, Any, str]]): A list of tuples, where each tuple contains the name, value, and format specifier for a pair to be formatted.
         separator (str): The separator to place between each name-value pair.
 
     Returns:
@@ -59,15 +59,15 @@ def flatten_name_value_pairs(pairs, separator):
     return message[:-1*len(separator)]
 
 
-def shift_array(ar, n):
+def shift_array(ar: np.ndarray, n:int) -> np.ndarray:
     """Shifts the elements of a 1D NumPy array by a specified number of positions.
 
     Args:
-        ar (ndarray): The 1D NumPy array to be shifted.
+        ar (np.ndarray): The 1D NumPy array to be shifted.
         n (int): The number of positions by which to shift the array. A positive value will shift the array to the right, and a negative value will shift the array to the left.
 
     Returns:
-        ndarray: The shifted 1D NumPy array, with empty positions filled with NaN values.
+        np.ndarray: The shifted 1D NumPy array, with empty positions filled with NaN values.
     """
     e = np.empty_like(ar)
     if n >= 0:

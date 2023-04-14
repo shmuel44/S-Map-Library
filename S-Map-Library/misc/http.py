@@ -1,10 +1,11 @@
 import io as io
+from typing import Any
 from PIL import Image as pim
 import urllib as ul
 
 
 
-def get_url(url, user_agent=None):
+def get_url(url: str, user_agent: str = None) -> Any:
     """Downloads the contents of a URL.
 
     Args:
@@ -29,34 +30,34 @@ def get_url(url, user_agent=None):
     return response.read()
 
 
-def download_bytes(url):
+def download_bytes(url: str) -> io.BytesIO:
     """Downloads the contents of a URL as a BytesIO object.
 
     Args:
         url (str): The URL to download.
 
     Returns:
-        BytesIO: The downloaded content as a BytesIO object.
+        io.BytesIO: The downloaded content as a BytesIO object.
     """
     return io.BytesIO(
         get_url(url))
 
 
-def download_image(url):
+def download_image(url: str) -> pim.Image:
     """Downloads an image from a URL and returns it as a PIL Image object.
 
     Args:
         url (str): The URL of the image to download.
 
     Returns:
-        PIL Image: The downloaded image as a PIL Image object.
+        pim.Image: The downloaded image as a PIL Image object.
     """
     return pim.Image.open(
         download_bytes(
             url))
 
 
-def download_text(url):
+def download_text(url: str) -> str:
     """Downloads the contents of a URL as a string.
 
     Args:
@@ -69,7 +70,7 @@ def download_text(url):
         get_url(url))
 
 
-def get_url_filename(url):
+def get_url_filename(url: str) -> str:
     """Extracts the filename from a URL.
 
     Args:

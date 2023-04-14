@@ -1,8 +1,8 @@
 import itertools as it
+from typing import Any, SupportsIter, Tuple
 
 
-
-def chunks(iterable, batch_size):
+def chunks(iterable: SupportsIter, batch_size: int) -> Tuple[Any]:
     """
     Divide an iterable into chunks of a specified size.
 
