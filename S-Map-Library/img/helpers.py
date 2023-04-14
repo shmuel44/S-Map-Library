@@ -2,6 +2,7 @@ import math as mth
 import numpy as np
 import PIL as pil
 from PIL import Image as pim
+from PIL import ImageOps as pio
 import os as os
 from typing import List, Tuple, Optional
 
@@ -32,10 +33,10 @@ def fit_image(
     if height is None: 
         height = pil_image.height
 
-    return pil.ImageOps.fit(
+    return pio.fit(
         pil_image,
         (width, height),
-        pim.Image.ANTIALIAS)
+        pim.ANTIALIAS)
 
 
 def resize_image(
@@ -62,8 +63,8 @@ def resize_image(
         height = pil_image.height
         
     return pil_image.resize(
-        [width, height], 
-        resample=pim.Image.ANTIALIAS)
+        size=(width, height), 
+        resample=pim.ANTIALIAS)
 
 
 def image_to_array(
@@ -129,9 +130,9 @@ def crop_image(
         pim.Image: The cropped PIL Image.
     """
     return pil_image.transform(
-        size=rectangle.size,
-        method=pim.Image.EXTENT,
-        resample=pim.Image.ANTIALIAS,
+        size=(rectangle.width, rectangle. height),
+        method=pim.EXTENT,
+        resample=pim.ANTIALIAS,
         data=rectangle.ltrb())
 
 
@@ -181,6 +182,6 @@ def extract_square_portion(
     # Crop the image to the square portion.
     return image.transform(
         size=output_size,
-        method=pim.Image.EXTENT,
-        resample=pim.Image.ANTIALIAS,
+        method=pim.EXTENT,
+        resample=pim.ANTIALIAS,
         data=(x, y, x + max_dimension, y + max_dimension))

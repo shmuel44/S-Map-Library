@@ -1,6 +1,6 @@
 import dataiku as di
 import numpy as np
-from typing import List, Tuple, Union, Optional
+from typing import Iterable, List, Tuple, Union, Optional
 from PIL import Image as pim
 
 from . import helpers as lim
@@ -73,7 +73,7 @@ class ImageContainer:
         Returns:
             _type_: _description_
         """
-        self.__valid_image = lim.is_valid_image(self.__handle, self.__file_path)
+        self.__valid_image = is_valid_image(self.__handle, self.__file_path)
         return self.is_valid()
     
     @property
@@ -103,7 +103,7 @@ class ImageContainer:
             if not self.is_valid():
                 raise Exception('The ImageContainer instance has not been validated. Call validate() first.')
                 
-            self.__image = lim.load_and_resize_image(
+            self.__image = load_and_resize_image(
                 folder=self.__handle,
                 file_path=self.__file_path,
                 width=self.__width,
@@ -157,7 +157,7 @@ def open_image(folder: Union[str, di.Folder], file_path: str) -> pim.Image:
         np.ndarray: The loaded image.
     """
     with lio.get_folder(folder).get_download_stream(file_path) as stream:
-        return pim.Image.open(stream)
+        return pim.open(stream)
 
 def is_valid_image(folder: Union[str, di.Folder], file_path: str) -> bool:
     """
@@ -188,7 +188,7 @@ def is_valid_image(folder: Union[str, di.Folder], file_path: str) -> bool:
         # Catch specific exceptions that can occur when verifying the image file.
         return False
 
-def load_image(folder: Union[str, di.Folder], file_path: str) -> pim.Image:
+def load_image(folder: Union[str, di.Folder], file_path: str) -> np.ndarray:
     """Loads an image from the given folder and file path.
 
     Args:
@@ -237,7 +237,7 @@ def load_and_resize_image(folder: Union[str, di.Folder], file_path: str, width: 
         width, 
         height)
     
-def get_images_as_batches(folder: Union[str, di.Folder], target_width: int, target_height: int, batch_size: int, rescaled: bool = True) -> Tuple[np.ndarray, List[str]]:
+def get_images_as_batches(folder: Union[str, di.Folder], target_width: int, target_height: int, batch_size: int, rescaled: bool = True) -> Iterable[Tuple[np.ndarray, List[str]]]:
     """Returns image batches and file names for all images in a given directory.
 
     Args:

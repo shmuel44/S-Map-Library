@@ -1,8 +1,8 @@
 import itertools as it
-from typing import Any, SupportsIter, Tuple
+from typing import Any, Iterable, Tuple
 
 
-def chunks(iterable: SupportsIter, batch_size: int) -> Tuple[Any]:
+def chunks(iterable: Iterable, batch_size: int) -> Iterable:
     """
     Divide an iterable into chunks of a specified size.
 
@@ -14,9 +14,9 @@ def chunks(iterable: SupportsIter, batch_size: int) -> Tuple[Any]:
         tuple: The next chunk of the iterable as a tuple.
 
     """
-    it = iter(iterable)
-    chunk = tuple(it.islice(it, batch_size))
+    ite = iter(iterable)
+    chunk = tuple(it.islice(ite, batch_size))
 
     while chunk:
         yield chunk
-        chunk = tuple(it.islice(it, batch_size))
+        chunk = tuple(it.islice(ite, batch_size))

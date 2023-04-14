@@ -1,44 +1,50 @@
 import math as mth
+from typing import Optional, Tuple
 
 
 class Rectangle:
     """A rectangle with coordinates (x, y) and dimensions (width, height).
 
     Args:
-        x (float): The x-coordinate of the top-left corner of the rectangle.
-        y (float): The y-coordinate of the top-left corner of the rectangle.
-        width (float): The width of the rectangle.
-        height (float): The height of the rectangle.
+        x (int): The x-coordinate of the top-left corner of the rectangle.
+        y (int): The y-coordinate of the top-left corner of the rectangle.
+        width (int): The width of the rectangle.
+        height (int): The height of the rectangle.
     """
-
-    def __init__(self, x, y, width, height):
+    def __init__(self, x: int, y: int, width: int, height: int):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Rectangle(x={self.x}, y={self.y}, width={self.width}, height={self.height})"
 
-    def lt(self):
+    def lt(self) -> Tuple[int, int]:
         """
         Returns the point at the (left, top) location of the rectangle
         """
         return self.x, self.y
 
-    def rb(self):
+    def rb(self) -> Tuple[int, int]:
         """
         Returns the point at the (right, bottom) location of the rectangle
         """
         return self.x + self.width, self.y + self.height
 
-    def ltrb(self):
+    def ltrb(self) -> Tuple[int, int, int, int]:
         """
         Returns a tuple (left, top, right, bottom) representing the rectangle
         """
         return (*self.lt(), *self.rb())
 
-    def area(self):
+    def size(self) -> Optional[Tuple[int, int]]:
+        """
+        Returns a tuple (width, height) representing the rectangle
+        """
+        return self.width, self.height
+    
+    def area(self) -> int:
         """Calculate the area of the rectangle.
 
         Returns:
@@ -46,7 +52,7 @@ class Rectangle:
         """
         return self.width * self.height
 
-    def contains(self, rectangle):
+    def contains(self, rectangle) -> bool:
         """Check if another rectangle is completely contained within this rectangle.
 
         Args:
@@ -60,7 +66,7 @@ class Rectangle:
                 and self.x + self.width >= rectangle.x + rectangle.width
                 and self.y + self.height >= rectangle.y + rectangle.height)
 
-    def grow(self, ratio, image_width, image_height):
+    def grow(self, ratio, image_width, image_height) -> 'Rectangle':
         """Try and inflate a rectangle by a ratio, without exceeding the image itself.
 
         Args:

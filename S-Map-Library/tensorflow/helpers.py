@@ -3,11 +3,11 @@ import os as os
 
 
 
-def set_tensorflow_hub_cache_location(path):
+def set_tensorflow_hub_cache_location(path: str) -> None:
     """Sets the location of the Tensorflow Hub cache directory.
 
     Args:
-        path (_type_): The path to the cache directory.
+        path (str): The path to the cache directory.
     """
     os.environ['TFHUB_CACHE_DIR'] = path
     

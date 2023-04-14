@@ -1,5 +1,5 @@
 import dataiku as di
-from typing import Union
+from typing import Dict, Tuple, Union, Any
 
 from ..misc import http as web
 
@@ -12,12 +12,12 @@ def get_folder(folder: Union[str, di.Folder]) -> di.Folder:
         folder (Union[str, di.Folder]): The name of the DSS managed folder, or the folder handle.
 
     Returns:
-        dataiku.Folder: The managed folder handle.
+        di.Folder: The managed folder handle.
     """
     return folder if isinstance(folder, di.Folder) else di.Folder(folder)
 
 
-def path_exists(folder: Union[str, di.Folder], path: str) -> bool:
+def path_exists(folder: Union[str, di.Folder], path: str) -> Tuple[bool, Any]:
     """Checks whether a path exists in a managed folder.
 
     Args:
@@ -25,7 +25,9 @@ def path_exists(folder: Union[str, di.Folder], path: str) -> bool:
         path (str): The path to check existence for.
 
     Returns:
-        bool: True if the path exists, False otherwise.
+        Tuple[bool, Any]: A 2-tuple containing:
+          1) True if the path is valid, False otherwise
+          2) The result of get_path_details(file_path).
     """
     try:
         info = get_folder(folder).get_path_details(path)
@@ -34,7 +36,7 @@ def path_exists(folder: Union[str, di.Folder], path: str) -> bool:
         return False, None
 
 
-def file_exists(folder: Union[str, di.Folder], path: str) -> bool:
+def file_exists(folder: Union[str, di.Folder], path: str) -> Tuple[bool, Any]:
     """Checks whether a path exists in a managed folder and is a file.
 
     Args:
@@ -42,7 +44,9 @@ def file_exists(folder: Union[str, di.Folder], path: str) -> bool:
         file_path (str): The path to the image file.
 
     Returns:
-        bool: True if the path is a valid file path, False otherwise.
+        Tuple[bool, Any]: A 2-tuple containing:
+          1) True if the path is valid, False otherwise
+          2) The result of get_path_details(file_path).
     """
     try:
         info = get_folder(folder).get_path_details(path)
@@ -51,7 +55,7 @@ def file_exists(folder: Union[str, di.Folder], path: str) -> bool:
         return False, None
 
 
-def directory_exists(folder: Union[str, di.Folder], path: str) -> bool:
+def directory_exists(folder: Union[str, di.Folder], path: str) -> Tuple[bool, Any]:
     """Checks whether a path exists in a managed folder and is a directory.
 
     Args:
@@ -59,7 +63,9 @@ def directory_exists(folder: Union[str, di.Folder], path: str) -> bool:
         file_path (str): The path to the image file.
 
     Returns:
-        bool: True if the path is a valid directory path, False otherwise.
+        Tuple[bool, Any]: A 2-tuple containing:
+          1) True if the path is valid, False otherwise
+          2) The result of get_path_details(file_path).
     """
     try:
         info = get_folder(folder).get_path_details(path)
@@ -87,7 +93,7 @@ def url_to_managed_folder(url: str, folder: Union[str, di.Folder], path: str) ->
         with handle.get_writer(path) as w:
             w.write(web.get_url(url))
             
-        exists = file_exists(handle, path)
+        exists, _ = file_exists(handle, path)
     except:
         exists = False
         
