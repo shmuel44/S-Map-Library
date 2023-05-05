@@ -1,7 +1,9 @@
 import pandas as pd
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Literal, Tuple
 import numpy as np
-
+import re
+from urllib.parse import urlparse
+from enum import Enum
 
 
 def cleanup_dict(d: Dict[str, Any]) -> Dict[str, Any]:
@@ -78,4 +80,33 @@ def shift_array(ar: np.ndarray, n:int) -> np.ndarray:
         e[:n] = ar[-n:]
     return e
 
+
+class StringKind(Enum):
+    """An enumeration of the kinds of strings (URL, file path, or other).
+    """
+    Url = 'Url'
+    Path = 'Path'
+    Other = 'Other'
+
+def get_string_kind(string: str) -> StringKind:
+    """Determines the kind of string (URL, file path, or other).
+    Args:
+        string (str): The string to be evaluated.
+    Returns:
+        StringKind: The kind of string.
+    """
+    try:
+        url = urlparse(string)
+
+        if url.scheme and url.netloc:
+            return StringKind.Url
+        
+        file_path_pattern = re.compile(r'^(?:[a-zA-Z]:|\/|[a-zA-Z0-9_\-\s]+)(?:\/[a-zA-Z0-9_\-\s]+)*\.{0,1}[a-zA-Z0-9]*$')
+
+        if file_path_pattern.match(string):
+            return StringKind.Path
+    except:
+        pass
     
+    return StringKind.Other
+

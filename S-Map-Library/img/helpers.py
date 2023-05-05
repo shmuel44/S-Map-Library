@@ -1,6 +1,5 @@
 import math as mth
 import numpy as np
-import PIL as pil
 from PIL import Image as pim
 from PIL import ImageOps as pio
 import os as os
@@ -185,3 +184,92 @@ def extract_square_portion(
         method=pim.EXTENT,
         resample=pim.ANTIALIAS,
         data=(x, y, x + max_dimension, y + max_dimension))
+
+
+def open_image(file_path: str) -> pim.Image:
+    """Opens an image from the given file path.
+
+    Args:
+        file_path (str): The path to the image file.
+
+    Returns:
+        np.ndarray: The loaded image.
+    """
+    return pim.open(file_path)
+
+
+def is_valid_image(file_path: str) -> bool:
+    """
+    Checks if the given file path corresponds to a valid image file.
+
+    Args:
+        file_path (str): The path to the file to check.
+
+    Returns:
+        bool: True if the image is valid, False otherwise.
+    """
+    try:
+        # Open the image file.
+        image = open_image(file_path)
+
+        # Verify that the image file is a valid format and can be decoded.
+        image.verify()
+
+        # Check that the image dimensions are positive and non-zero.
+        width, height = image.size
+        if width <= 0 or height <= 0:
+            return False
+
+        return True
+
+    except (IOError, SyntaxError, ValueError, OSError):
+        # Catch specific exceptions that can occur when verifying the image file.
+        return False
+
+
+def load_image(file_path: str) -> np.ndarray:
+    """Loads an image from the given file path.
+
+    Args:
+        file_path (str): The path to the image file.
+
+    Returns:
+        Image: The loaded image.
+    """
+    return np.array(
+        open_image(
+            file_path))
+
+
+def load_and_fit_image(file_path: str, width: Optional[int], height: Optional[int]) -> pim.Image:
+    """Loads an image and scales it to the given width and height while preserving aspect ratio.
+
+    Args:
+        file_path (str): The path to the image file.
+        width (Optional[int]): The desired width of the image.
+        height (Optional[int]): The desired height of the image.
+
+    Returns:
+        Image: The loaded and scaled image.
+    """
+    return fit_image(
+        open_image(file_path),
+        width, 
+        height)
+
+
+def load_and_resize_image(file_path: str, width: Optional[int], height: Optional[int]) -> pim.Image:
+    """Loads an image and resizes it to the given width and height.
+
+    Args:
+        file_path (str): The path to the image file.
+        width (Optional[int]): The desired width of the image.
+        height (Optional[int]): The desired height of the image.
+
+    Returns:
+        pim.Image: The loaded and resized image.
+    """
+    return resize_image(
+        open_image(file_path),
+        width, 
+        height)
