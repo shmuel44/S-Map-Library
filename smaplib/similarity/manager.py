@@ -1,9 +1,8 @@
-import numpy as np
 import pandas as pd
 import os as os
 import pickle
 from annoy import AnnoyIndex as ann
-from typing import Literal, List, Dict, Any, Union, Tuple
+from typing import List, Dict, Any
 from enum import Enum
 
 from . import feature as sfe

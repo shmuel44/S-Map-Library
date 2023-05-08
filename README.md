@@ -1,1 +1,1 @@
-# S-Map-Library
+# smaplib
