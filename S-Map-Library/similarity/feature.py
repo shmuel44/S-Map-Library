@@ -644,11 +644,16 @@ class ClothingImageFeature(BaseImageFeature):
             cache_path=cache_path)
 
 
+#####################
+# Multiple Features #
+#####################
+
 class FeatureSet:
 
-    def __init__(self) -> None:
-        self.features: Optional[List[BaseFeature]] =  None
-        self.dataset: Optional[pd.DataFrame] =  None
+    def __init__(
+            self,
+            features: Optional[List[BaseFeature]]=None) -> None:
+        self.features = features
 
     ###################
     # Private methods #
@@ -659,7 +664,7 @@ class FeatureSet:
             row_data: Any,
             kind: FeatureKind) -> List[Any]:
         if self.features is None:
-            return []
+            raise Exception('Features not set')
         
         return [
             f.process(data=row_data[f.feature_name])
@@ -673,22 +678,24 @@ class FeatureSet:
     def set_features(self, features: List[BaseFeature]) -> None:
         self.features = features
 
-    def set_dataset(self, dataset: pd.DataFrame) -> None:
-        self.dataset = dataset
-
-    def sanity_check(self) -> None:
-        if self.dataset is None:
+    def sanity_check(
+            self,
+            dataset: pd.DataFrame) -> None:
+        if dataset is None:
             raise Exception('Data not set')
 
         if self.features is None:
             raise Exception('Features not set')
         
         for feature in self.features:
-            feature.sanity_check(self.dataset)    
+            feature.sanity_check(dataset)
+
+        if len([f for f in self.features if f.is_key]) == 0:
+            raise Exception('No key features found')
 
     def get_row_embedding_dimension(self) -> int:
         if self.features is None:
-            return 0
+            raise Exception('Features not set')
         
         return sum([
             f.output_size 
@@ -701,18 +708,26 @@ class FeatureSet:
                 row_data=row_data, 
                 kind=FeatureKind.Embedding)) # type: ignore
     
+    def get_row_metadata(self, row_data:Any) -> List[Any]:
+        return self._get_row_processed_data_of_kind(
+            row_data=row_data, 
+            kind=FeatureKind.Metadata)
+    
     def get_row_output(self, row_data:Any) -> List[Any]:
         return self._get_row_processed_data_of_kind(
             row_data=row_data, 
             kind=FeatureKind.Output)
     
-    def get_row_keys(self, row_data:Any) -> List[Any]:
+    def get_row_key(self, row_data:Any) -> Any:
+        '''Returns the key for the given row data.'''
         if self.features is None:
-            return []
+            raise Exception('Features not set')
         
-        return [
+        key = tuple([
             row_data[f.feature_name]
             for f in self.features
             if f.is_key
-        ]
+        ])
+
+        return key if len(key) > 1 else key[0]
     
