@@ -11,6 +11,19 @@ from ..misc import http as hh
 from ..misc import common as co
 
 
+
+##########
+# Config #
+##########
+
+class FEATURE_MODULE_CONFIG:
+    VERBOSE: bool = False
+    CACHE_DIR: str = '.'
+
+#########
+# Enums #
+#########
+
 class FeatureKind(Enum):
     """An enumeration of the kinds of features.
     """
@@ -19,12 +32,14 @@ class FeatureKind(Enum):
     Output = 'output'
     Ignored = 'ignored'
 
+
 class CaseConversion(Enum):
     """An enumeration of the kinds of case conversion.
     """
     NoChange = 'no-change'
     LowerCase = 'lower-case'
     UpperCase = 'upper-case'
+
 
 #################
 # Base Features #
@@ -39,8 +54,7 @@ class BaseFeature:
             feature_kind:FeatureKind=FeatureKind.Embedding,
             is_key: bool=False,
             input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            output_size:Optional[int]=None, 
-            cache_path:Optional[str]=None) -> None:
+            output_size:Optional[int]=None) -> None:
 
         self.feature_name = feature_name
         self.feature_type = feature_type
@@ -48,61 +62,34 @@ class BaseFeature:
         self.is_key = is_key
         self.input_size = input_size
         self.output_size = output_size
-        self.cache_path = cache_path
-
-        self._shelve = None
-        self._load_cache()
 
     ###################
     # Private methods #
     ###################
 
-    def __exit__(self, *exc_info):
-        self._save_cache()
-
-    def _load_cache(self):
-        
-        cache_path = self._get_cache_path()
-
-        self._shelve = she.open(
-            filename=cache_path)
-
-    def _get_cache_path(self):
-        cache_path = None
-
-        if self.cache_path is not None and os.path.exists(self.cache_path):
-            cache_path = os.path.join(
-                self.cache_path, 
-                self.feature_type)
-        else:
-            cache_path = self.feature_type
-
-        return cache_path
-
-    def _save_cache(self):
-        self._shelve.close()
-
-    def _flush_cache(self):
-        self._save_cache()
-        self._load_cache()
+    def _printout_self_state(self):
+        print('type: "{0}"'.format(type(self)))
+        print('feature_name: "{0}"'.format(self.feature_name))
+        print('feature_kind: "{0}"'.format(self.feature_kind))
+        print('feature_type: "{0}"'.format(self.feature_type))
+        print('is_key: "{0}"'.format(self.is_key))
+        print('input_size: "{0}"'.format(self.input_size))
+        print('output_size: "{0}"'.format(self.output_size))
 
     ##################
     # Public methods #
     ##################
 
     def process(self, data:Any) -> Any:
-        output = None
+        if FEATURE_MODULE_CONFIG.VERBOSE:
+            print('----------')
+            print('class: "{0}", function: "process", data: "{1}"'.format(self.__class__.__name__, data))
+            print('----------')
+            print('')
 
-        if data in self._shelve:
-            output = self._shelve[data]
-        else:
-            output = self.process_data(
-                data=self.preprocess_data(
-                    data=data))
-            
-            self._shelve[data] = output
-        
-        return output
+        return self.process_data(
+            data=self.preprocess_data(
+                data=data))
 
     #####################################
     # Methods to override in subclasses #
@@ -120,7 +107,7 @@ class BaseFeature:
         return data
 
     def process_data(self, data:Any) -> Any:
-        raise data
+        return data
     
     def dimension(self) -> Optional[int]:
         return self.output_size
@@ -137,23 +124,111 @@ class BaseHubFeature(BaseFeature):
             model_url:str, 
             is_key: bool=False,
             input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            output_size:Optional[int]=None, 
-            cache_path:Optional[str]=None) -> None:
+            output_size:Optional[int]=None) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type=feature_type,
             feature_kind=FeatureKind.Embedding,
             is_key=is_key,
             input_size=input_size,
-            output_size=output_size, 
-            cache_path=cache_path)
+            output_size=output_size)
 
-        self.model = BaseHubFeature._register_model(model_url)
+        self.model_url = model_url
+        self.model = BaseHubFeature._register_model(self.model_url)
+
+        self._embeddings_cache = None
+        self._load_cache()
+
+    ###################
+    # Private methods #
+    ###################
+
+    def _printout_self_state(self):
+        super()._printout_self_state()
+        print('model_url: "{0}"'.format(self.model_url))
+
+    def __exit__(self, *exc_info):
+        self._save_cache()
+
+    def _load_cache(self):
+        cache_path = self._get_cache_path()
+
+        self._embeddings_cache = she.open(
+            filename=cache_path)
+
+    def _get_cache_path(self):
+        cache_path = FEATURE_MODULE_CONFIG.CACHE_DIR
+
+        if not os.path.exists(cache_path):
+            os.makedirs(cache_path)
+
+        return os.path.join(
+            cache_path, 
+            'CACHE__{0}'.format(self.feature_type))
+
+    def _save_cache(self):
+        if not self._embeddings_cache is None:
+            self._embeddings_cache.close()
+
+    def _flush_cache(self):
+        self._save_cache()
+        self._load_cache()
 
     def _empty_embedding(self) -> np.ndarray:
         return np.array(
             [0]*self.dimension(), 
             np.float32)
+
+    def _get_cache_key(self, key:Any) -> Tuple[Any, Any]:
+        
+        cache_key = None
+        cache_key_exists = False
+
+        if isinstance(key, float) and np.isnan(key):
+            cache_key = None
+        elif isinstance(key, str) and key == '':
+            cache_key = None
+        else:
+            cache_key = str(key)
+        
+        if self._embeddings_cache is not None:
+            if cache_key is not None:
+                cache_key_exists = cache_key in self._embeddings_cache
+
+        return cache_key, cache_key_exists
+        
+    ##################
+    # Public methods #
+    ##################
+
+    def process(self, data:Any) -> Any:
+        if FEATURE_MODULE_CONFIG.VERBOSE:
+            print('----------')
+            print('class: "{0}", function: "process", data: "{1}"'.format(self.__class__.__name__, data))
+            print('----------')
+            print('')
+
+        output = None
+
+        try:
+            cache_key, cache_key_exists = self._get_cache_key(
+                key=data)
+
+            if cache_key_exists:
+                output = self._embeddings_cache[cache_key]
+            else:
+                output = super().process(data=data)
+
+                if cache_key is not None:
+                    self._embeddings_cache[cache_key] = output
+        except Exception as e:  
+            if FEATURE_MODULE_CONFIG.VERBOSE:
+                self._printout_self_state()
+                print('data: "{0}" (type: "{1}")'.format(data, type(data)))
+                print('output: "{0}"'.format(output))
+                print('Exception: "{0}" (type: "{1}")'.format(e, type(e)))
+        
+        return output
 
     ####################
     # Static / Private #
@@ -180,6 +255,12 @@ class BaseHubFeature(BaseFeature):
             raise Exception('Input size not set for feature "{0}"'.format(self.feature_name))
         
     def process_data(self, data:Any) -> Any:
+        if FEATURE_MODULE_CONFIG.VERBOSE:
+            print('----------')
+            print('class: "{0}", function: "process", data: "{1}"'.format(self.__class__.__name__, data))
+            print('----------')
+            print('')
+
         if data is None:
             return self._empty_embedding()
         else:
@@ -198,16 +279,14 @@ class BaseTextFeature(BaseHubFeature):
             model_url:str, 
             is_key: bool=False,
             input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            output_size:Optional[int]=None, 
-            cache_path:Optional[str]=None) -> None:
+            output_size:Optional[int]=None) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type=feature_type,
             model_url=model_url,
             is_key=is_key,
             input_size=input_size,
-            output_size=output_size, 
-            cache_path=cache_path)
+            output_size=output_size)
 
     #############
     # Overrides #
@@ -230,36 +309,46 @@ class BaseImageFeature(BaseHubFeature):
             model_url:str, 
             is_key: bool=False,
             input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            output_size:Optional[int]=None, 
-            cache_path:Optional[str]=None) -> None:
+            output_size:Optional[int]=None) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type=feature_type,
             model_url=model_url,
             is_key=is_key,
             input_size=input_size,
-            output_size=output_size, 
-            cache_path=cache_path)
+            output_size=output_size)
 
     #############
     # Overrides #
     #############
 
     def preprocess_data(self, data:Any) -> Any:
-        
+        if FEATURE_MODULE_CONFIG.VERBOSE:
+            print('----------')
+            print('class: "{0}", function: "process", data: "{1}"'.format(self.__class__.__name__, data))
+            print('----------')
+            print('')
+
         if data is None:
+            return None
+        elif isinstance(data, float) and np.isnan(data):
+            return None
+        elif isinstance(data, str) and data == '':
             return None
         
         string_kind = co.get_string_kind(data)
         pil_image = None
 
-        if string_kind == co.StringKind.Url:
-            pil_image = hh.download_image(
-                url=data)
-        elif string_kind == co.StringKind.Path:
-            pil_image = ih.open_image(
-                file_path=data)
-        
+        try:
+            if string_kind == co.StringKind.Url:
+                pil_image = hh.download_image(
+                    url=data)
+            elif string_kind == co.StringKind.Path:
+                pil_image = ih.open_image(
+                    file_path=data)
+        except Exception as e:
+            pil_image = None
+
         if pil_image is not None:
             if pil_image.size != self.input_size:
                 pil_image = ih.extract_square_portion(
@@ -281,16 +370,14 @@ class BaseMetadataFeature(BaseFeature):
             self, 
             feature_name:str,
             feature_type:str, 
-            is_key: bool=False,
-            cache_path:Optional[str]=None):
+            is_key: bool=False):
         super().__init__(
             feature_name=feature_name,
             feature_type=feature_type,
             feature_kind=FeatureKind.Metadata,
             is_key=is_key,
             input_size=None,
-            output_size=None, 
-            cache_path=cache_path)
+            output_size=None)
 
 
 class BaseOutputFeature(BaseFeature):
@@ -299,16 +386,14 @@ class BaseOutputFeature(BaseFeature):
             self, 
             feature_name:str,
             feature_type:str, 
-            is_key: bool=False,
-            cache_path:Optional[str]=None):
+            is_key: bool=False):
         super().__init__(
             feature_name=feature_name,
             feature_type=feature_type,
             feature_kind=FeatureKind.Output,
             is_key=is_key,
             input_size=None,
-            output_size=None, 
-            cache_path=cache_path)
+            output_size=None)
 
 
 ###################
@@ -323,8 +408,7 @@ class CategoryFeature(BaseFeature):
             trim:bool=True, 
             case_conversion:CaseConversion=CaseConversion.NoChange,
             is_key: bool=False,
-            output_size:Optional[int]=None, 
-            cache_path:Optional[str]=None) -> None:
+            output_size:Optional[int]=None) -> None:
         
         super().__init__(
             feature_name=feature_name,
@@ -332,8 +416,7 @@ class CategoryFeature(BaseFeature):
             feature_kind=FeatureKind.Embedding,
             is_key=is_key,
             input_size=None,
-            output_size=output_size,
-            cache_path=cache_path)
+            output_size=output_size)
         
         self.trim = trim
         self.case_conversion = case_conversion
@@ -425,16 +508,14 @@ class CsvCategoryFeature(CategoryFeature):
             trim: bool=True, 
             case_conversion: CaseConversion=CaseConversion.NoChange,
             is_key: bool=False,
-            output_size: int=128, 
-            cache_path: Optional[str]=None) -> None:
+            output_size: int=128) -> None:
         
         super().__init__(
             feature_name=feature_name,
             trim=trim,
             case_conversion=case_conversion,
             is_key=is_key,
-            output_size=output_size,
-            cache_path=cache_path)
+            output_size=output_size)
 
         self.feature_type = 'csv_categoy'        
         self.separator = separator
@@ -491,16 +572,14 @@ class BooleanFeature(BaseFeature):
             self, 
             feature_name:str,
             default_value:float=0.5,
-            is_key: bool=False,
-            cache_path:Optional[str]=None) -> None:
+            is_key: bool=False) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type='boolean',
             feature_kind=FeatureKind.Embedding,
             is_key=is_key,
             input_size=None,
-            output_size=1,
-            cache_path=cache_path)
+            output_size=1)
     
         self.default_value = default_value
 
@@ -530,16 +609,14 @@ class NumericFeature(BaseFeature):
             feature_name:str,
             default_value:float=0.0, 
             range:Optional[Tuple[float, float]]=None,
-            is_key: bool=False,
-            cache_path:Optional[str]=None):
+            is_key: bool=False):
         super().__init__(
             feature_name=feature_name,
             feature_type='numeric',
             feature_kind=FeatureKind.Embedding,
             is_key=is_key,
             input_size=None,
-            output_size=1, 
-            cache_path=cache_path)
+            output_size=1)
 
         self.default_value = default_value
         self.range = range
@@ -580,16 +657,14 @@ class ShortTextFeature(BaseTextFeature):
             self, 
             feature_name:str,
             is_key: bool=False,
-            input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            cache_path:Optional[str]=None) -> None:
+            input_size:Optional[Union[int, Tuple[int, int]]]=None) -> None:
         super().__init__(
             feature_name=feature_name,
-            feature_type='text',
+            feature_type='tfhub_dev_google_nnlm_en_dim128_2',
             model_url='https://tfhub.dev/google/nnlm-en-dim128/2',
             is_key=is_key,
             input_size=input_size,
-            output_size=128, 
-            cache_path=cache_path)
+            output_size=128)
 
 
 class LongTextFeature(BaseTextFeature):
@@ -598,16 +673,14 @@ class LongTextFeature(BaseTextFeature):
             self, 
             feature_name:str,
             is_key: bool=False,
-            input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            cache_path:Optional[str]=None) -> None:
+            input_size:Optional[Union[int, Tuple[int, int]]]=None) -> None:
         super().__init__(
             feature_name=feature_name,
-            feature_type='longtext',
+            feature_type='tfhub_dev_google_universal_sentence_encoder_large_5',
             model_url='https://tfhub.dev/google/universal-sentence-encoder-large/5',
             is_key=is_key,
             input_size=input_size,
-            output_size=512, 
-            cache_path=cache_path)
+            output_size=512)
 
 
 class StandardImageFeature(BaseImageFeature):
@@ -615,16 +688,14 @@ class StandardImageFeature(BaseImageFeature):
     def __init__(
             self, 
             feature_name: str,
-            is_key: bool=False,
-            cache_path: Optional[str]=None) -> None:
+            is_key: bool=False) -> None:
         super().__init__(
             feature_name=feature_name,
-            feature_type='standard_image',
+            feature_type='tfhub_dev_google_imagenet_inception_v3_feature_vector_5',
             model_url='https://tfhub.dev/google/imagenet/inception_v3/feature_vector/5',
             is_key=is_key,
             input_size=(500, 500),
-            output_size=2048, 
-            cache_path=cache_path)
+            output_size=2048)
 
 
 class ClothingImageFeature(BaseImageFeature):
@@ -632,16 +703,14 @@ class ClothingImageFeature(BaseImageFeature):
     def __init__(
             self, 
             feature_name:str,
-            is_key: bool=False,
-            cache_path:Optional[str]=None) -> None:
+            is_key: bool=False) -> None:
         super().__init__(
             feature_name=feature_name,
-            feature_type='clothing_image',
+            feature_type='tfhub_dev_google_experts_bit_r50x1_in21k_clothing_1',
             model_url='https://tfhub.dev/google/experts/bit/r50x1/in21k/clothing/1',
             is_key=is_key,
             input_size=(500, 500),
-            output_size=2048, 
-            cache_path=cache_path)
+            output_size=2048)
 
 
 #####################
@@ -704,9 +773,9 @@ class FeatureSet:
     
     def get_row_embedding(self, row_data:Any) -> np.ndarray:
         return np.concatenate(
-            arrays=self._get_row_processed_data_of_kind(
+            tuple(self._get_row_processed_data_of_kind(
                 row_data=row_data, 
-                kind=FeatureKind.Embedding)) # type: ignore
+                kind=FeatureKind.Embedding))) # type: ignore
     
     def get_row_metadata(self, row_data:Any) -> List[Any]:
         return self._get_row_processed_data_of_kind(

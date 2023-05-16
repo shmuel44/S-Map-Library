@@ -26,15 +26,14 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence'
     ],
     install_requires=[
-        # 'numpy',
-        # 'pandas',
-        # 'urllib3',
-        # 'matplotlib',
-        # 'annoy',
-        # 'dataiku-internal-client',
-        # 'pinecone-client',
-        # 'tensorflow-hub',
-        # 'tensorflow'
+        'annoy',
+        'dataiku-internal-client',
+        'pinecone-client',
+        'tensorflow-hub',
+        'tensorflow',
+        'matplotlib',
+        'pillow',
+        'pandas',
     ],
     python_requires='>=3.6',
     packages=find_packages())

@@ -1,9 +1,10 @@
 import pandas as pd
 import os as os
 import pickle
-from annoy import AnnoyIndex as ann
+import annoy as ann
 from typing import List, Dict, Any
 from enum import Enum
+from tqdm.notebook import tqdm
 
 from . import feature as sfe
 
@@ -26,11 +27,12 @@ class ProductEmbeddingsManager:
             feature_set: sfe.FeatureSet,
             n_trees: int=25) -> None:
 
-        self.metric = metric
-        self.annoy_metric = metric if metric != 'cosine' else 'angular'
+        self.metric = metric.value
+        self.annoy_metric = self.metric if self.metric != 'cosine' else 'angular'
         self.feature_set = feature_set
         self.dimension = feature_set.get_row_embedding_dimension()
         self.n_trees = n_trees
+        self.embeddings_index = None
 
         self.create_index()
 
@@ -56,9 +58,9 @@ class ProductEmbeddingsManager:
         
         self.create_index()
 
-        for row_data in dataframe.itertuples(index=True):
+        for index in tqdm(range(len(dataframe))):
             self.add_product(
-                row_data=row_data._asdict())
+                row_data=dataframe.iloc[index].to_dict())
             
         if make_final:
             self._build_index()
@@ -116,7 +118,7 @@ class ProductEmbeddingsManager:
         product_embedding = product['embedding']
 
         indices, distances = self.embeddings_index.get_nns_by_vector(
-            v=product_embedding, 
+            vector=product_embedding, 
             n=top_k + 1, 
             include_distances=True)
 
@@ -153,6 +155,7 @@ class ProductEmbeddingsManager:
         if filename is None:
             raise ValueError("No filename provided for loading.")
 
+        self.create_index()
         products_filename = filename + EmbeddingsManagerFileExtensions.PRODUCTS.value
         
         with open(products_filename, 'rb') as f:
@@ -163,7 +166,6 @@ class ProductEmbeddingsManager:
             for product in self.products_from_key.values()
         }
 
-        self.create_index()
         loaded = False
 
         if not keep_online:
