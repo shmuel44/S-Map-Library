@@ -3,13 +3,15 @@ import numpy as np
 import tensorflow_hub as hu
 import pandas as pd
 import shelve as she
+import dataiku as di
 from typing import Any, Dict, List, Literal, Tuple, Union, Optional
 from enum import Enum
 
 from ..img import helpers as ih
 from ..misc import http as hh
 from ..misc import common as co
-
+from ..io import dss as lio
+from ..img import dss as lim
 
 
 ##########
@@ -304,12 +306,13 @@ class BaseImageFeature(BaseHubFeature):
 
     def __init__(
             self, 
-            feature_name:str,
-            feature_type:str, 
-            model_url:str, 
+            feature_name: str,
+            feature_type: str, 
+            model_url: str, 
             is_key: bool=False,
-            input_size:Optional[Union[int, Tuple[int, int]]]=None, 
-            output_size:Optional[int]=None) -> None:
+            folder: Optional[Union[str, di.Folder]]=None,
+            input_size: Optional[Union[int, Tuple[int, int]]]=None, 
+            output_size: Optional[int]=None) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type=feature_type,
@@ -317,6 +320,11 @@ class BaseImageFeature(BaseHubFeature):
             is_key=is_key,
             input_size=input_size,
             output_size=output_size)
+
+        self._folder = None
+        
+        if folder is not None:
+            self._folder = lio.get_folder(folder)
 
     #############
     # Overrides #
@@ -341,12 +349,16 @@ class BaseImageFeature(BaseHubFeature):
 
         try:
             if string_kind == co.StringKind.Url:
-                pil_image = hh.download_image(
-                    url=data)
+                pil_image = hh.download_image(url=data)
             elif string_kind == co.StringKind.Path:
-                pil_image = ih.open_image(
-                    file_path=data)
-        except Exception as e:
+                if self._folder is None:
+                    pil_image = ih.open_image(
+                        file_path=data)
+                else:
+                    pil_image = lim.open_valid_image(
+                        folder=self._folder, 
+                        file_path=data)
+        except:
             pil_image = None
 
         if pil_image is not None:
@@ -688,12 +700,14 @@ class StandardImageFeature(BaseImageFeature):
     def __init__(
             self, 
             feature_name: str,
-            is_key: bool=False) -> None:
+            is_key: bool=False,
+            folder: Optional[Union[str, di.Folder]]=None) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type='tfhub_dev_google_imagenet_inception_v3_feature_vector_5',
             model_url='https://tfhub.dev/google/imagenet/inception_v3/feature_vector/5',
             is_key=is_key,
+            folder=folder,
             input_size=(500, 500),
             output_size=2048)
 
@@ -703,12 +717,14 @@ class ClothingImageFeature(BaseImageFeature):
     def __init__(
             self, 
             feature_name:str,
-            is_key: bool=False) -> None:
+            is_key: bool=False,
+            folder: Optional[Union[str, di.Folder]]=None) -> None:
         super().__init__(
             feature_name=feature_name,
             feature_type='tfhub_dev_google_experts_bit_r50x1_in21k_clothing_1',
             model_url='https://tfhub.dev/google/experts/bit/r50x1/in21k/clothing/1',
             is_key=is_key,
+            folder=folder,
             input_size=(500, 500),
             output_size=2048)
 

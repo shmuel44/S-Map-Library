@@ -146,6 +146,25 @@ class ImageContainer:
             rescaled=rescaled)
 
 
+def open_valid_image(folder: Union[str, di.Folder], file_path: str) -> Optional[pim.Image]:
+    """Opens a valid image from the given folder and file path.
+
+    Args:
+        folder (Union[str, di.Folder]): The name of the DSS managed folder, or the folder handle.
+        file_path (str): The path to the image file.
+
+    Returns:
+        np.ndarray: The loaded image.
+    """
+
+    handle = lio.get_folder(folder)
+
+    if handle is not None:
+        if is_valid_image(handle, file_path):
+            return open_image(handle, file_path)
+
+    return None
+
 def open_image(folder: Union[str, di.Folder], file_path: str) -> pim.Image:
     """Opens an image from the given folder and file path.
 
