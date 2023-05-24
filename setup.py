@@ -12,7 +12,7 @@ setup(
     long_description=long_description,
     author='Benjamin Raibaud',
     author_email='braibaud@gmail.com',
-    url='https://github.com/braibaud/smaplib',
+    url='https://github.com/braibaud/S-Map-Library',
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
