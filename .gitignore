@@ -133,3 +133,5 @@ dmypy.json
 
 # Pypi deployment
 deploy.bat
+deploy.sh
+
