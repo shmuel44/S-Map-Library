@@ -17,13 +17,13 @@ from .misc import common
 from .misc import http
 from .misc import iterable
 
-from .pinecone import classes
-from .pinecone import helpers
+from .pnc import classes
+from .pnc import helpers
 
 from .similarity import feature
 from .similarity import manager
 
-from .tensorflow import helpers
+from .tsfl import helpers
 
 
 __version__ = '1.0.1'
