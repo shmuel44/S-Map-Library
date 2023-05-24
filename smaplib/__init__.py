@@ -6,12 +6,12 @@ from .img import dss
 from .img import helpers
 from .img import plot
 
-from .io import array
-from .io import common
-from .io import dss
-from .io import json
-from .io import pickle
-from .io import text
+from .fsio import array
+from .fsio import common
+from .fsio import dss
+from .fsio import json
+from .fsio import pickle
+from .fsio import text
 
 from .misc import common
 from .misc import http

@@ -4,7 +4,7 @@ from typing import Iterable, List, Tuple, Union, Optional
 from PIL import Image as pim
 
 from . import helpers as lim
-from ..io import dss as lio
+from ..fsio import dss as lio
 from ..misc import iterable as it
 
 

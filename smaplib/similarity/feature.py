@@ -10,7 +10,7 @@ from enum import Enum
 from ..img import helpers as ih
 from ..misc import http as hh
 from ..misc import common as co
-from ..io import dss as lio
+from ..fsio import dss as lio
 from ..img import dss as lim
 
 
